@@ -10,10 +10,6 @@
 
 [Google YOLO](https://developers.google.com/identity/one-tap/web/overview) is Google's implementaion for **One-Tap** Sign Up and **automatic** Sign In using **OpenYOLO** protocol.
 
-## Installation
-
-The component can be installed from bower
-
 ## Usage
 
 ```html
