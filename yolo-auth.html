@@ -13,8 +13,32 @@
   <script>
     /**
      * `yolo-auth`
-     * Google OneTap YOLO implementation for polymer
+     * Polymer wrapper around Google OneTap YOLO implementation
      * 
+     * ## Usage
+     * ```html
+     * <yolo-auth
+     *  id="auth"
+     *  user="{{user}}"
+     *  client-id="your-google-oauth2-client-id">
+     * <yolo-auth>
+     * ```
+     * Javascript sign-in calls can then be made to the `yolo-auth` object to attempt Sign Up/Sign In
+     * ```javascript
+     * this.$.auth.signIn()
+     *    .them((user) => {
+     *      // Successful response
+     *    })
+     *    .catch((error) => {
+     *      // Unsuccessful response : Something went wrong
+     *    });
+     * ```
+     *
+     * By this users are prompted to create an account with a dialog that's inline with
+     * your page's content, so they're never taken out of context by a sign-up page.
+     * With just one-tap they get secure, token-based, passwordless account with your service,
+     * protected by their Google Account.
+     *
      * @customElement
      * @polymer
      * @demo demo/index.html
@@ -24,11 +48,23 @@
       
       static get properties() {
         return {
+          /** Google OAuth2 client ID */
           clientId: String,
+
+          /**
+           * Credentials provided by the Google YOLO API
+           *
+           * @type {{ authMethod: string, displayName: string, id: string, idToken: string, profilePicture: string }}
+           */
           user: {
             type: Object,
             notify: true
           },
+
+          /**
+           * YOLO request object sent to Google API during sign in/ sign up
+           * Computed on the basis of clientID.
+           */
           _yoloRequestObject: {
             type: Object,
             computed: '_computeYoloRequestObject(clientId)'
@@ -36,6 +72,13 @@
         };
       }
 
+      /**
+       * Computes the YOLO request object to be sent to the Google API during sign in/ sign up
+       * 
+       * @param {string} clientId The Google OAuth2 client ID
+       * 
+       * @return {Object} The computed YOLO request object.
+       */
       _computeYoloRequestObject(clientId) {
         return {
           supportedAuthMethods: [
@@ -50,6 +93,12 @@
         };
       }
 
+     /**
+      * Loads the Google YOLO script asynchronously
+      * Adds the script tag to the `head`, removes it if load was unsuccessful
+      *
+      * @return {Promise<Object>} The promise which resolves when script load succeeds and rejects when it errors.
+      */
       _loadYOLOScript() {
         return new Promise((resolve, reject) => {
           if (window.googleyolo) {
@@ -84,6 +133,11 @@
         });
       }
 
+      /**
+       * Attempts the YOLO sign up/sign in
+       *
+       * @return {Promise<Object>} The promise which resolves if sign up/sign in is successful, rejects when unsuccessful
+       */
       signIn() {
         return new Promise((resolve, reject) => {
           if (this.user) {
@@ -114,6 +168,11 @@
         });
       }
 
+      /**
+       * Cancels the operation by closing the credentials selector
+       * 
+       * @return {Promise<Object>} The promise which resolves when credentials selector is closed, rejects if there is error
+       */
       cancelOperation() {
         if (window.googleyolo) {
           return window.googleyolo.cancelLastOperation();

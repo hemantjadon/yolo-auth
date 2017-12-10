@@ -24,7 +24,7 @@ The component can be installed from bower
 </yolo-auth>
 ```
 
-Javascript sign-in calls can then be made to the `yolo-auth` object to attempt authentication
+Javascript sign-in calls can then be made to the `yolo-auth` object to attempt Sign Up/Sign In
 
 ```javascript
 this.$.auth.signIn()
