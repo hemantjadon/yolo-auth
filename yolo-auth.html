@@ -1,0 +1,126 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="yolo-auth">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+  </template>
+
+  <script>
+    /**
+     * `yolo-auth`
+     * Google OneTap YOLO implementation for polymer
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class YoloAuth extends Polymer.Element {
+      static get is() { return 'yolo-auth'; }
+      
+      static get properties() {
+        return {
+          clientId: String,
+          user: {
+            type: Object,
+            notify: true
+          },
+          _yoloRequestObject: {
+            type: Object,
+            computed: '_computeYoloRequestObject(clientId)'
+          }
+        };
+      }
+
+      _computeYoloRequestObject(clientId) {
+        return {
+          supportedAuthMethods: [
+              "https://accounts.google.com",
+            ],
+            supportedIdTokenProviders: [
+              {
+                uri: "https://accounts.google.com",
+                clientId
+              }
+            ]
+        };
+      }
+
+      _loadYOLOScript() {
+        return new Promise((resolve, reject) => {
+          if (window.googleyolo) {
+            resolve({ ok: true });
+          } else {
+            const scriptId = `google-yolo-script-${Math.ceil(Math.random() * 1E6)}`; // Random Script ID
+
+            const yoloScript = document.createElement('script');
+            yoloScript.setAttribute('src', 'https://smartlock.google.com/client');
+            yoloScript.setAttribute('async', true);
+            yoloScript.setAttribute('defer', true);
+            yoloScript.setAttribute('id', scriptId);
+
+            const firstScript = document.getElementsByTagName('script')[0];
+            if (firstScript) {
+              firstScript.parentNode.insertBefore(yoloScript, firstScript);
+            } else {
+              document.head.appendChild(yoloScript);
+            }
+
+            yoloScript.addEventListener('load', (resp) => resolve({ ok: true }));
+            yoloScript.addEventListener('error', (err) => {
+              const script = document.getElementById(scriptId);
+              try {
+                script.parentNode.removeChild(script);
+              } catch (e) {
+                // Ignore: if unable to remove the child, ie. child is already removed.
+              }
+              reject({ ok: false });
+            });
+          }
+        });
+      }
+
+      signIn() {
+        return new Promise((resolve, reject) => {
+          if (this.user) {
+            resolve(this.user);
+          } else {
+            this._loadYOLOScript()
+              .then(() => {
+                window.googleyolo.retrieve(this._yoloRequestObject)
+                  .then((credentials) => {
+                    this.user = credentials;
+                    resolve(credentials);
+                  })
+                  .catch((error) => {
+                    if (error.type === 'noCredentialsAvailable') {
+                      window.googleyolo.hint(this._yoloRequestObject)
+                        .then((credentials) => {
+                          this.user = credentials;
+                          resolve(credentials);
+                        })
+                        .catch((error) => reject(error));
+                    } else {
+                      reject(error);
+                    }
+                  });
+              })
+              .catch(() => reject({ error: 'Unable to load script' }));
+          }
+        });
+      }
+
+      cancelOperation() {
+        if (window.googleyolo) {
+          return window.googleyolo.cancelLastOperation();
+        }
+      }
+    }
+
+    window.customElements.define(YoloAuth.is, YoloAuth);
+  </script>
+</dom-module>
