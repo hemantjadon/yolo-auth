@@ -1,21 +1,39 @@
 # \<yolo-auth\>
 
-Google OneTap YOLO implementation for polymer
+`yolo-auth` is wrapper around Google OneTap YOLO implementation. It notifies the successful authentication and provides user information and handles Google YOLO implementaion.
 
-## Install the Polymer-CLI
+## OpemYOLO
 
-First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your element locally.
+[OpenYOLO](https://github.com/openid/OpenYOLO-Web) for Web is an OpenID Foundation project to provide in-context credential exchange and management. By using this API, a requesting page can directly retrieve existing credentials in the user's preferred credential manager.
 
-## Viewing Your Element
+## Google YOLO (One-Tap Sign Up and automatic sign in)
 
+[Google YOLO](https://developers.google.com/identity/one-tap/web/overview) is Google's implementaion for **One-Tap** Sign Up and **automatic** Sign In using **OpenYOLO** protocol.
+
+## Installation
+
+The component can be installed from bower
+
+## Usage
+
+```html
+<yolo-auth
+	id="auth"
+	user="{{user}}"
+	client-id="your-google-oauth2-client-id">
+</yolo-auth>
 ```
-$ polymer serve
+
+Javascript sign-in calls can then be made to the `yolo-auth` object to attempt authentication
+
+```javascript
+this.$.auth.signIn()
+	.then((user) => {
+		// Successful response
+	})
+	.catch((error) => {
+		// Unsuccessful Response
+	});
 ```
 
-## Running Tests
-
-```
-$ polymer test
-```
-
-Your application is already set up to be tested via [web-component-tester](https://github.com/Polymer/web-component-tester). Run `polymer test` to run your application's test suite locally.
+By this users are prompted to create an account with a dialog that's inline with your page's content, so they're never taken out of context by a sign-up page. With just one-tap they get secure, token-based, passwordless account with your service, protected by their Google Account.
