@@ -13,38 +13,92 @@
   </head>
   <body>
 
-    <test-fixture id="BasicTestFixture">
+    <test-fixture id="InstantiationTestFixture">
       <template>
         <yolo-auth></yolo-auth>
       </template>
     </test-fixture>
 
-    <test-fixture id="ChangedPropertyTestFixture">
+    <test-fixture id="ApiCheckFixture">
       <template>
-        <yolo-auth prop1="new-prop1"></yolo-auth>
+        <yolo-auth></yolo-auth>
       </template>
     </test-fixture>
 
     <script>
+      const stubUserInfo = {
+        authMethod: 'https://accounts.google.com',
+        displayName: 'Foo Bar',
+        id: 'foo@gmail.com',
+        idToken: 'shfjkshfheufhjdfkajsfnuihunj',
+        profilePicture: 'https://usercontent/foo/image.jpg'
+      };
+
+      const stubGoogleYolo = {
+        retrieve: (reqObj) => {
+          return new Promise((resolve, reject) => {
+            const p = Math.random();
+            if (p > 0.5) {
+              resolve(stubUserInfo);
+            } else {
+              reject({type: 'noCredentialsAvailable'});
+            }
+          });
+        },
+        hint: (reqObj) => {
+          return new Promise((resolve, reject) => {
+            resolve(stubUserInfo);
+          });
+        },
+        cancelLastOperation: () => {
+          return new Promise((resolve, reject) => {
+            resolve();
+          });
+        }
+      };
+
+      const stubScript = () => {
+        window.googleyolo = stubGoogleYolo;
+      };
+
       suite('yolo-auth', () => {
 
-        test('instantiating the element with default properties works', () => {
-          const element = fixture('BasicTestFixture');
-          assert.equal(element.prop1, 'yolo-auth');
-          const elementShadowRoot = element.shadowRoot;
-          const elementHeader = elementShadowRoot.querySelector('h2');
-          assert.equal(elementHeader.innerHTML, 'Hello yolo-auth!');
+        test('instantiating the element with default properties', () => {
+          const element = fixture('InstantiationTestFixture');
+          assert.equal(element.clientId, undefined);
+          assert.equal(element.user, undefined);
         });
 
-        test('setting a property on the element works', () => {
-          // Create a test fixture
-          const element = fixture('ChangedPropertyTestFixture');
-          assert.equal(element.prop1, 'new-prop1');
-          const elementShadowRoot = element.shadowRoot;
-          const elementHeader = elementShadowRoot.querySelector('h2');
-          assert.equal(elementHeader.innerHTML, 'Hello new-prop1!');
+        test('checking the element has correct public API', () => {
+          const element = fixture('ApiCheckFixture');
+          stubScript();
+
+          const signIn = element.signIn;
+          const signInResp = signIn.bind(element).call();
+          assert.isFunction(signIn);
+          assert.instanceOf(signInResp, Promise);
+
+          const cancelOp = element.cancelOperation;
+          const cancelOpResp = cancelOp.bind(element).call();
+          assert.isFunction(cancelOp);
+          assert.instanceOf(cancelOpResp, Promise);
         });
 
+        test('checking signIn method works', async () => {
+          const element = fixture('ApiCheckFixture');
+          stubScript();
+
+          const result = await element.signIn();
+          assert.equal(result, stubUserInfo);
+        });
+
+        test('checking cancelOperation method works', async () => {
+          const element = fixture('ApiCheckFixture');
+          stubScript();
+
+          await element.cancelOperation();
+          assert.isOk(true);
+        });
       });
     </script>
 
