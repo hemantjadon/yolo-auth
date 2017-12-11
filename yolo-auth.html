@@ -14,7 +14,7 @@
     /**
      * `yolo-auth`
      * Polymer wrapper around Google OneTap YOLO implementation
-     * 
+     *
      * ## Usage
      * ```html
      * <yolo-auth
@@ -45,7 +45,7 @@
      */
     class YoloAuth extends Polymer.Element {
       static get is() { return 'yolo-auth'; }
-      
+
       static get properties() {
         return {
           /** Google OAuth2 client ID */
@@ -53,8 +53,6 @@
 
           /**
            * Credentials provided by the Google YOLO API
-           *
-           * @type {{ authMethod: string, displayName: string, id: string, idToken: string, profilePicture: string }}
            */
           user: {
             type: Object,
@@ -74,9 +72,9 @@
 
       /**
        * Computes the YOLO request object to be sent to the Google API during sign in/ sign up
-       * 
+       *
        * @param {string} clientId The Google OAuth2 client ID
-       * 
+       *
        * @return {Object} The computed YOLO request object.
        */
       _computeYoloRequestObject(clientId) {
@@ -97,7 +95,8 @@
       * Loads the Google YOLO script asynchronously
       * Adds the script tag to the `head`, removes it if load was unsuccessful
       *
-      * @return {Promise<Object>} The promise which resolves when script load succeeds and rejects when it errors.
+      * @return {Promise<Object>}
+      * The promise which resolves when script load succeeds and rejects when it errors.
       */
       _loadYOLOScript() {
         return new Promise((resolve, reject) => {
@@ -135,8 +134,11 @@
 
       /**
        * Attempts the YOLO sign up/sign in
+       * To see the list of Google YOLO errors and response handling, visit
+       * [Handling Google YOLO response](https://developers.google.com/identity/one-tap/web/retrieve-hints#handle_the_hint_request_result)
        *
-       * @return {Promise<Object>} The promise which resolves if sign up/sign in is successful, rejects when unsuccessful
+       * @return {Promise<Object>}
+       * The promise which resolves if sign up/sign in is successful, rejects when unsuccessful
        */
       signIn() {
         return new Promise((resolve, reject) => {
@@ -170,8 +172,9 @@
 
       /**
        * Cancels the operation by closing the credentials selector
-       * 
-       * @return {Promise<Object>} The promise which resolves when credentials selector is closed, rejects if there is error
+       *
+       * @return {Promise<Object>}
+       * The promise which resolves when credentials selector is closed, rejects if there is error
        */
       cancelOperation() {
         if (window.googleyolo) {
