@@ -1,5 +1,7 @@
 # \<yolo-auth\>
 
+[![Published on webcomponents.org](https://img.shields.io/badge/webcomponents.org-published-blue.svg)](https://www.webcomponents.org/element/hemantjadon/yolo-auth)
+
 `yolo-auth` is wrapper around Google OneTap YOLO implementation. It notifies the successful authentication and provides user information and handles Google YOLO implementaion.
 
 ## OpemYOLO
