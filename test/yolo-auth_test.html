@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+    <meta name="viewport"
+      content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
     <title>yolo-auth test</title>
 
@@ -15,11 +16,17 @@
 
     <test-fixture id="InstantiationTestFixture">
       <template>
-        <yolo-auth></yolo-auth>
+        <yolo-auth client-id="c-id"></yolo-auth>
       </template>
     </test-fixture>
 
     <test-fixture id="ApiCheckFixture">
+      <template>
+        <yolo-auth></yolo-auth>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="EventsCheckFixture">
       <template>
         <yolo-auth></yolo-auth>
       </template>
@@ -34,71 +41,149 @@
         profilePicture: 'https://usercontent/foo/image.jpg'
       };
 
-      const stubGoogleYolo = {
-        retrieve: (reqObj) => {
-          return new Promise((resolve, reject) => {
-            const p = Math.random();
-            if (p > 0.5) {
-              resolve(stubUserInfo);
-            } else {
-              reject({type: 'noCredentialsAvailable'});
-            }
-          });
-        },
-        hint: (reqObj) => {
-          return new Promise((resolve, reject) => {
-            resolve(stubUserInfo);
-          });
-        },
-        cancelLastOperation: () => {
-          return new Promise((resolve, reject) => {
-            resolve();
-          });
-        }
+      const stubGoogleYolo = (success) => {
+        return {
+          retrieve: (reqObj) => {
+            return new Promise((resolve, reject) => {
+              if (success) {
+                resolve(stubUserInfo);
+              } else {
+                reject({type: 'noCredentialsAvailable'});
+              }
+            });
+          },
+          hint: (reqObj) => {
+            return new Promise((resolve, reject) => {
+              if (success) {
+                resolve(stubUserInfo);
+              } else {
+                reject({ type: 'noCredentialsAvailable' })
+              }
+            });
+          },
+          cancelLastOperation: () => {
+            return new Promise((resolve, reject) => {
+              resolve();
+            });
+          }
+        };
       };
 
-      const stubScript = () => {
-        window.googleyolo = stubGoogleYolo;
+      const stubScript = (success) => {
+        window.googleyolo = stubGoogleYolo(success);
       };
 
-      suite('yolo-auth', () => {
+      describe('yolo-auth', () => {
 
-        test('instantiating the element with default properties', () => {
+        it('should instantiate the element with default properties', () => {
           const element = fixture('InstantiationTestFixture');
-          assert.equal(element.clientId, undefined);
-          assert.equal(element.user, undefined);
+          expect(element.clientId).to.equal('c-id');
+          expect(element.user).to.be.undefined;
         });
 
-        test('checking the element has correct public API', () => {
+        it('should have a method signIn', () => {
           const element = fixture('ApiCheckFixture');
-          stubScript();
 
-          const signIn = element.signIn;
-          const signInResp = signIn.bind(element).call();
-          assert.isFunction(signIn);
-          assert.instanceOf(signInResp, Promise);
-
-          const cancelOp = element.cancelOperation;
-          const cancelOpResp = cancelOp.bind(element).call();
-          assert.isFunction(cancelOp);
-          assert.instanceOf(cancelOpResp, Promise);
+          expect(element.signIn).to.be.a('function',
+            'signIn should be a function');
         });
 
-        test('checking signIn method works', async () => {
+        it('should have have a method cancelOperation', () => {
           const element = fixture('ApiCheckFixture');
-          stubScript();
 
-          const result = await element.signIn();
-          assert.equal(result, stubUserInfo);
+          expect(element.cancelOperation).to.be.a('function',
+            'cancelOperation should be a function');
         });
 
-        test('checking cancelOperation method works', async () => {
+        it('should dispatch sign-in-success event on successful sign-in', (done) => {
           const element = fixture('ApiCheckFixture');
-          stubScript();
+          stubScript(true);
 
-          await element.cancelOperation();
-          assert.isOk(true);
+          element.addEventListener('sign-in-success', (event) => {
+            expect(event.detail.credentials).to.be.equal(stubUserInfo);
+            done();
+          });
+
+          element.signIn();
         });
+
+        it('should dispatch sign-in-fail event on unsuccessful sign-in', (done) => {
+          const element = fixture('ApiCheckFixture');
+          stubScript(false);
+
+          element.addEventListener('sign-in-fail', (event) => {
+            expect(event.detail.error).not.to.be.undefined;
+            done();
+          });
+
+          element.signIn();
+        });
+
+        // describe(signIn)
+        describe('signIn', () => {
+          let element, signIn;
+
+          beforeEach(() => {
+            element = fixture('ApiCheckFixture');
+            signIn = element.signIn;
+          });
+
+          it('should should be an method which returns a promise', () => {
+            stubScript(true);
+            const signInResp = signIn.call(element);
+
+            expect(signInResp).to.be.an.instanceOf(Promise,
+              'return of signIn should be Promise');
+          });
+
+          it('should return a promise which resolves on successful sign-in', () => {
+            stubScript(true);
+
+            return (
+              signIn.call(element)
+                .then((credentials) => {
+                  expect(credentials).to.equal(stubUserInfo);
+                })
+            );
+          });
+
+          it('should return a promise which rejects on unsuccessful sign-in', () => {
+            stubScript(false);
+
+            return (
+              signIn.call(element)
+                .then(null, (error) => {
+                  expect(error).not.to.be.undefined;
+                })
+            );
+          });
+        });
+
+        // describe(cancelOpreation)
+        describe('cancelOperation', () => {
+          let element, cancelOperation;
+
+          beforeEach(() => {
+            element = fixture('ApiCheckFixture');
+            cancelOperation = element.cancelOperation;
+          });
+
+          it('should should be an method which returns a promise', () => {
+            stubScript(true);
+            const cancalOpResp = cancelOperation.call(element);
+
+            expect(cancelOperation).to.be.a('function');
+            expect(cancalOpResp).to.be.an.instanceOf(Promise,
+              'return of signIn should be Promise');
+          });
+
+          it('should return a promise which resolves on successful operation cancelation', () => {
+            stubScript(true);
+
+            return cancelOperation.call(element);
+          });
+        });
+
       });
     </script>
 
