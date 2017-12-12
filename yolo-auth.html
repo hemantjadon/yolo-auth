@@ -23,7 +23,8 @@
      *  client-id="your-google-oauth2-client-id">
      * <yolo-auth>
      * ```
-     * Javascript sign-in calls can then be made to the `yolo-auth` object to attempt Sign Up/Sign In
+     * Javascript sign-in calls can then be made to the `yolo-auth` object to attempt
+     * Sign Up/Sign In
      * ```javascript
      * this.$.auth.signIn()
      *    .them((user) => {
@@ -44,8 +45,25 @@
      * @demo demo/index.html
      */
     class YoloAuth extends Polymer.Element {
+      /**
+       * Fired when `sign in` succeeds
+       *
+       * @event sign-in-success
+       * @param {Object} credentials Credentials of the the user
+       *
+       */
+
+      /**
+       * Fired when `sign in` fails
+       *
+       * @event sign-in-fail
+       * @param {Object} error Error object
+       */
+
+      /** Describes the custom tag name */
       static get is() { return 'yolo-auth'; }
 
+      /** Describes properties of the object observed and managed by polymer */
       static get properties() {
         return {
           /** Google OAuth2 client ID */
@@ -103,7 +121,8 @@
           if (window.googleyolo) {
             resolve({ ok: true });
           } else {
-            const scriptId = `google-yolo-script-${Math.ceil(Math.random() * 1E6)}`; // Random Script ID
+            // Random Script ID
+            const scriptId = `google-yolo-script-${Math.ceil(Math.random() * 1E6)}`;
 
             const yoloScript = document.createElement('script');
             yoloScript.setAttribute('src', 'https://smartlock.google.com/client');
@@ -150,6 +169,10 @@
                 window.googleyolo.retrieve(this._yoloRequestObject)
                   .then((credentials) => {
                     this.user = credentials;
+                    this.dispatchEvent(new CustomEvent('sign-in-success', {
+                      bubbles: true,
+                      detail: { credentials }
+                    }));
                     resolve(credentials);
                   })
                   .catch((error) => {
@@ -157,15 +180,35 @@
                       window.googleyolo.hint(this._yoloRequestObject)
                         .then((credentials) => {
                           this.user = credentials;
+                          this.dispatchEvent(new CustomEvent('sign-in-success', {
+                            bubbles: true,
+                            detail: { credentials }
+                          }));
                           resolve(credentials);
                         })
-                        .catch((error) => reject(error));
+                        .catch((error) => {
+                          this.dispatchEvent(new CustomEvent('sign-in-fail', {
+                            bubbles: true,
+                            detail: { error }
+                          }));
+                          reject(error);
+                        });
                     } else {
+                      this.dispatchEvent(new CustomEvent('sign-in-fail', {
+                        bubbles: true,
+                        detail: { error }
+                      }));
                       reject(error);
                     }
                   });
               })
-              .catch(() => reject({ error: 'Unable to load script' }));
+              .catch(() => {
+                this.dispatchEvent(new CustomEvent('sign-in-fail', {
+                  bubbles: true,
+                  detail: { error: { type: 'scriptLoadError' } }
+                }));
+                reject({ type: 'scriptLoadError' });
+              });
           }
         });
       }
