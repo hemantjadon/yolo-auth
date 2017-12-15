@@ -164,7 +164,7 @@
           if (this.user) {
             this.dispatchEvent(new CustomEvent('sign-in-success', {
               bubbles: true,
-              detail: { credentials }
+              detail: { credentials: this.user }
             }));
             resolve(this.user);
           } else {
@@ -213,6 +213,25 @@
                 }));
                 reject({ type: 'scriptLoadError' });
               });
+          }
+        });
+      }
+
+      /**
+       * Signs out the user by resetting the the `user` property to `undefined`
+       *
+       * @return {Promise<void>}
+       * The promise which resolves on successful sign-out and rejects on unsuccessful sign-out
+       */
+      signOut() {
+        return new Promise((resolve, reject) => {
+          if (this.user) {
+            this.user = undefined;
+            this.dispatchEvent(new CustomEvent('sign-out-success', { bubbles: true }));
+            resolve();
+          } else {
+            this.dispatchEvent(new CustomEvent('sign-out-success', { bubbles: true }));
+            resolve();
           }
         });
       }

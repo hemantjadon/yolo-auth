@@ -88,6 +88,13 @@
             'signIn should be a function');
         });
 
+        it('should have have a method signOut', () => {
+          const element = fixture('ApiCheckFixture');
+
+          expect(element.cancelOperation).to.be.a('function',
+            'signOut should be a function');
+        });
+
         it('should have have a method cancelOperation', () => {
           const element = fixture('ApiCheckFixture');
 
@@ -105,6 +112,18 @@
           });
 
           element.signIn();
+        });
+
+        it('should dispatch sign-in-success event on repeat sign-in request ' +
+          'after successful sign-in', async () => {
+            const element = fixture('ApiCheckFixture');
+            stubScript(true);
+            const spyListener = sinon.spy();
+            element.addEventListener('sign-in-success', spyListener);
+
+            await element.signIn();
+            await element.signIn();
+            expect(spyListener.callCount).to.equal(2);
         });
 
         it('should dispatch sign-in-fail event on unsuccessful sign-in', (done) => {
@@ -147,6 +166,14 @@
             );
           });
 
+          it('should properly set the user attribute on successful sign-in', async () => {
+            stubScript(true);
+
+            expect(element.user).to.be.undefined;
+            await signIn.call(element);
+            expect(element.user).to.equal(stubUserInfo);
+          });
+
           it('should return a promise which rejects on unsuccessful sign-in', () => {
             stubScript(false);
 
@@ -156,6 +183,33 @@
                   expect(error).not.to.be.undefined;
                 })
             );
+          });
+        });
+
+        // describe(signOut)
+        describe('signOut', () => {
+          let element, signOut;
+
+          beforeEach(() => {
+            element = fixture('ApiCheckFixture');
+            signOut = element.signOut;
+          });
+
+          it('should should be an method which returns a promise', () => {
+            stubScript(true);
+            const signOutResp = signOut.call(element);
+
+            expect(signOut).to.be.a('function');
+            expect(signOutResp).to.be.an.instanceOf(Promise,
+              'return of signOut should be Promise');
+          });
+
+          it('should clear the user property to undefined', async () => {
+            stubScript(true);
+            await element.signIn();
+            await signOut.call(element);
+
+            expect(element.user).to.be.undefined;
           });
         });
 
@@ -174,7 +228,7 @@
 
             expect(cancelOperation).to.be.a('function');
             expect(cancalOpResp).to.be.an.instanceOf(Promise,
-              'return of signIn should be Promise');
+              'return of cancelOperation should be Promise');
           });
 
           it('should return a promise which resolves on successful operation cancelation', () => {
