@@ -162,6 +162,10 @@
       signIn() {
         return new Promise((resolve, reject) => {
           if (this.user) {
+            this.dispatchEvent(new CustomEvent('sign-in-success', {
+              bubbles: true,
+              detail: { credentials }
+            }));
             resolve(this.user);
           } else {
             this._loadYOLOScript()
